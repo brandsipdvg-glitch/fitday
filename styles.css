@@ -226,6 +226,15 @@ a { color: inherit; }
 
 /* Hero */
 
+.hero-audience {
+  margin-top: 20px;
+  padding-left: 18px;
+  border-left: 2px solid var(--accent);
+  font-size: 0.98rem;
+  color: rgba(255, 255, 255, 0.55);
+  max-width: 52ch;
+}
+
 .hero {
   background:
     radial-gradient(900px 420px at 78% -10%, rgba(204, 255, 0, 0.20), transparent 62%),
@@ -449,6 +458,96 @@ a { color: inherit; }
 
 .card-feature-accent .btn-primary:hover { background: #1f1f1f; }
 
+/* Economics comparison */
+
+.compare {
+  margin-top: clamp(32px, 5vw, 52px);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.compare-col {
+  padding: 26px 28px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.compare-col-accent {
+  border-color: var(--accent);
+  background: rgba(204, 255, 0, 0.09);
+}
+
+.compare-tag {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.compare-col-accent .compare-tag { color: var(--accent); }
+
+.compare-flow {
+  font-size: 0.99rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.compare-flow .arrow {
+  display: inline-block;
+  margin: 0 3px;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.compare-flow strong {
+  font-weight: 700;
+  color: var(--paper);
+  white-space: nowrap;
+}
+
+.compare-col-accent .compare-flow strong { color: var(--accent); }
+
+/* Founder */
+
+.founder-wrap {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: clamp(32px, 5vw, 64px);
+  align-items: start;
+}
+
+.founder-copy {
+  margin-top: 20px;
+  display: grid;
+  gap: 14px;
+  max-width: 52ch;
+  color: var(--ink-soft);
+}
+
+.founder-sign {
+  margin-top: 24px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.founder-note {
+  padding: 28px;
+  border-radius: var(--radius);
+  background: var(--soft);
+  border: 1px solid var(--line);
+}
+
+.founder-note-lead {
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  margin-bottom: 10px;
+}
+
+.founder-note p { color: var(--muted); font-size: 0.95rem; }
+
 /* Tags */
 
 .tags {
@@ -590,7 +689,9 @@ a { color: inherit; }
 @media (max-width: 900px) {
   .split,
   .two-col,
-  .form-wrap { grid-template-columns: 1fr; }
+  .form-wrap,
+  .compare,
+  .founder-wrap { grid-template-columns: 1fr; }
 
   .pillars,
   .steps { grid-template-columns: repeat(2, 1fr); }
