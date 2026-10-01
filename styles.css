@@ -868,11 +868,19 @@ a { color: inherit; }
   color: var(--accent);
 }
 
+.price-from {
+  margin-top: 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.62);
+}
+
 .price-amount {
   display: flex;
   align-items: baseline;
   gap: 2px;
-  margin-top: 14px;
   font-size: clamp(3rem, 8vw, 4rem);
   font-weight: 800;
   letter-spacing: -0.045em;
@@ -1069,6 +1077,12 @@ a { color: inherit; }
 }
 
 .amounts li:first-child { border-top: 0; padding-top: 0; }
+
+.amounts li em {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--accent-ink);
+}
 
 .amounts strong {
   font-weight: 700;
