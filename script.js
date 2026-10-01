@@ -1,6 +1,14 @@
 (function () {
   "use strict";
 
+  /* Lead delivery config.
+     Set FORM_ENDPOINT to a form backend to post leads straight to your inbox,
+     e.g. Formspree ("https://formspree.io/f/xxxxxxxx"), Basin, Web3Forms, etc.
+     While it is empty we fall back to opening the visitor's mail client with
+     the details pre-filled, so an enquiry is never silently dropped. */
+  var FORM_ENDPOINT = "";
+  var CONTACT_EMAIL = "";
+
   var header = document.querySelector(".site-header");
   var nav = document.getElementById("nav");
   var navToggle = document.getElementById("nav-toggle");
@@ -58,10 +66,7 @@
     });
   }
 
-  var form = document.getElementById("partner-form");
-  if (!form) return;
-
-  var success = document.getElementById("form-success");
+  var forms = document.querySelectorAll("form[data-form]");
 
   function setError(input, message) {
     var field = input.closest(".field");
@@ -69,10 +74,32 @@
     var slot = field.querySelector(".error");
     if (slot) slot.textContent = message || "";
     field.classList.toggle("invalid", Boolean(message));
+    if (message) input.setAttribute("aria-invalid", "true");
+    else input.removeAttribute("aria-invalid");
   }
 
   function validateField(input) {
+    if (input.type === "hidden") return true;
+
     var value = input.value.trim();
+
+    if (!value && !input.required) {
+      setError(input, "");
+      return true;
+    }
+
+    if (input.type === "email") {
+      if (!value) {
+        setError(input, "Please enter your email address.");
+        return false;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value)) {
+        setError(input, "Enter a valid email address.");
+        return false;
+      }
+      setError(input, "");
+      return true;
+    }
 
     if (input.id === "phone") {
       var digits = value.replace(/\D/g, "");
@@ -102,52 +129,123 @@
     return true;
   }
 
-  var inputs = form.querySelectorAll("input");
+  function setStatus(form, message, kind) {
+    var status = form.querySelector("[data-status]");
+    if (!status) return;
+    status.textContent = message || "";
+    status.className = "form-status" + (kind ? " form-status-" + kind : "");
+    status.hidden = !message;
+  }
 
-  inputs.forEach(function (input) {
-    input.addEventListener("blur", function () {
-      if (input.value.trim()) validateField(input);
+  function mailtoHref(form, data) {
+    var kind = form.getAttribute("data-form") === "waitlist"
+      ? "Early access request"
+      : "Partner gym application";
+    var lines = Object.keys(data).map(function (key) {
+      return key.charAt(0).toUpperCase() + key.slice(1) + ": " + data[key];
     });
+    var body = lines.join("\n") + "\n\nSent from " + window.location.href;
+    return "mailto:" + CONTACT_EMAIL +
+      "?subject=" + encodeURIComponent("FitDay — " + kind) +
+      "&body=" + encodeURIComponent(body);
+  }
 
-    input.addEventListener("input", function () {
-      var field = input.closest(".field");
-      if (field && field.classList.contains("invalid")) validateField(input);
-    });
-  });
-
-  form.addEventListener("submit", function (event) {
-    event.preventDefault();
-
-    var firstInvalid = null;
-    var allValid = true;
+  function initForm(form) {
+    var inputs = Array.prototype.slice.call(form.querySelectorAll("input, textarea, select"));
+    var submitBtn = form.querySelector('button[type="submit"]');
+    var honeypot = form.querySelector('[name="_gotcha"]');
+    var btnText = submitBtn ? submitBtn.textContent : "";
 
     inputs.forEach(function (input) {
-      if (!validateField(input)) {
-        allValid = false;
-        if (!firstInvalid) firstInvalid = input;
-      }
+      input.addEventListener("blur", function () {
+        if (input.type !== "hidden" && input.value.trim()) validateField(input);
+      });
+
+      input.addEventListener("input", function () {
+        var field = input.closest(".field");
+        if (field && field.classList.contains("invalid")) validateField(input);
+      });
     });
 
-    if (!allValid) {
-      if (firstInvalid) firstInvalid.focus();
-      return;
-    }
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
 
-    var data = {};
-    inputs.forEach(function (input) { data[input.name] = input.value.trim(); });
+      if (honeypot && honeypot.value) {
+        form.reset();
+        return;
+      }
 
-    try {
-      var stored = JSON.parse(localStorage.getItem("fitday_partners") || "[]");
-      stored.push(Object.assign({ submittedAt: new Date().toISOString() }, data));
-      localStorage.setItem("fitday_partners", JSON.stringify(stored));
-    } catch (err) {
-      /* storage unavailable or full — submission still shows success */
-    }
+      var firstInvalid = null;
+      var allValid = true;
 
-    form.reset();
-    if (success) {
-      success.hidden = false;
-      success.focus();
-    }
-  });
+      inputs.forEach(function (input) {
+        if (!validateField(input)) {
+          allValid = false;
+          if (!firstInvalid) firstInvalid = input;
+        }
+      });
+
+      if (!allValid) {
+        setStatus(form, "Please fix the highlighted fields and try again.", "error");
+        if (firstInvalid) firstInvalid.focus();
+        return;
+      }
+
+      var data = {};
+      inputs.forEach(function (input) {
+        if (input.type === "hidden") return;
+        data[input.name] = input.value.trim();
+      });
+      data.page = window.location.href;
+      data.submittedAt = new Date().toISOString();
+
+      setStatus(form, "", "");
+
+      function restoreButton() {
+        if (!submitBtn) return;
+        submitBtn.disabled = false;
+        submitBtn.textContent = btnText;
+      }
+
+      function finish(message, kind) {
+        form.reset();
+        inputs.forEach(function (input) { setError(input, ""); });
+        restoreButton();
+        setStatus(form, message, kind);
+        var status = form.querySelector("[data-status]");
+        if (status) status.focus();
+      }
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Sending…";
+      }
+
+      if (FORM_ENDPOINT) {
+        fetch(FORM_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify(data)
+        })
+          .then(function (response) {
+            if (!response.ok) throw new Error("Request failed");
+            finish("Thanks — you're on the list. We'll reach out shortly.", "ok");
+          })
+          .catch(function () {
+            restoreButton();
+            setStatus(
+              form,
+              "That didn't send. Please email " + (CONTACT_EMAIL || "us") + " directly and we'll add you by hand.",
+              "error"
+            );
+          });
+        return;
+      }
+
+      window.location.href = mailtoHref(form, data);
+      finish("Your email app should now be open with everything filled in — just press send.", "ok");
+    });
+  }
+
+  forms.forEach(initForm);
 })();
