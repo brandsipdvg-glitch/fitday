@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://brandsipdvg-glitch.github.io/fitday/sitemap.xml
+Sitemap: https://brandsipdvg-glitch.github.io/gimhop/sitemap.xml

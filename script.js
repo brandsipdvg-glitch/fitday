@@ -146,7 +146,7 @@
     });
     var body = lines.join("\n") + "\n\nSent from " + window.location.href;
     return "mailto:" + CONTACT_EMAIL +
-      "?subject=" + encodeURIComponent("FitDay — " + kind) +
+      "?subject=" + encodeURIComponent("GimHop — " + kind) +
       "&body=" + encodeURIComponent(body);
   }
 
